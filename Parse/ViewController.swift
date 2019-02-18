@@ -37,14 +37,31 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let url = URL(string: resultLinks[indexPath.row])
+        if let url = url {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
     @IBAction func searchButton(_ sender: UIButton) {
-        searchButton.setTitle("Close", for: .normal)
-        scrape(url: makeURL())
+        if self.searchButton.title(for: .normal) == "Google Search" {
+            searchButton.setTitle("Close", for: .normal)
+            scrape(url: makeURL())
+        } else {
+            Alamofire.SessionManager.default.session.getAllTasks { tasks in
+                tasks.forEach{ $0.cancel() }
+            }
+            searchButton.setTitle("Google Search", for: .normal)
+        }
+        
     }
     
     func scrape(url: String) {
         Alamofire.request(url).responseString { response in
             if response.result.isSuccess {
+                print(response.result.isSuccess)
                 self.resultNames.removeAll()
                 self.resultLinks.removeAll()
                 self.tableView.reloadData()
@@ -81,6 +98,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
         }
         return defaultUrl + str
+    }
+    
+    func strToURL (str: String) {
+        let regex = try? NSRegularExpression(pattern: "^http", options: .caseInsensitive)
+        if ((regex?.matches(in: str, options: .anchored, range: NSRange(location: 0, length: str.count))) != nil) {
+            print(regex)
+        }
+        
     }
     
 }
